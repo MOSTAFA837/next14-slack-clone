@@ -1,15 +1,18 @@
 import { v } from "convex/values";
-import { query } from "./_generated/server";
+import { query, QueryCtx } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { Id } from "./_generated/dataModel";
+
+const populateUser = (ctx: QueryCtx, id: Id<"users">) => {
+  return ctx.db.get(id);
+};
 
 export const current = query({
   args: { workspaceId: v.id("workspaces") },
   handler: async (ctx, args) => {
-    console.log("members.current handler called", { args, ctx });
     const userId = await getAuthUserId(ctx);
 
     if (!userId) {
-      console.log("members.current: no user id");
       return null;
     }
 
@@ -21,11 +24,50 @@ export const current = query({
       .unique();
 
     if (!member) {
-      console.log("members.current: no member found", { args, userId });
       return null;
     }
 
-    console.log("members.current: member found", { member, args, userId });
     return member;
+  },
+});
+
+export const get = query({
+  args: { workspaceId: v.id("workspaces") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+
+    if (!userId) {
+      return [];
+    }
+
+    const member = await ctx.db
+      .query("members")
+      .withIndex("by_workspace_id_user_id", (q) =>
+        q.eq("workspaceId", args.workspaceId).eq("userId", userId)
+      )
+      .unique();
+
+    if (!member) {
+      return [];
+    }
+
+    const data = await ctx.db
+      .query("members")
+      .withIndex("by_workspace_id", (q) =>
+        q.eq("workspaceId", args.workspaceId)
+      )
+      .collect();
+
+    const members = [];
+
+    for (const member of data) {
+      const user = await populateUser(ctx, member.userId);
+
+      if (user) {
+        members.push({ ...member, user });
+      }
+    }
+
+    return members;
   },
 });
