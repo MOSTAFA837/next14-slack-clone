@@ -1,11 +1,13 @@
 "use client";
 
+import Loading from "@/components/loading";
+import NotFound from "@/components/not-found";
 import useGetChannels from "@/features/channels/api/use-get-channels";
 import { useCreateChannelModal } from "@/features/channels/store/use-create-channel-modal";
 import { useCurrentMember } from "@/features/members/api/use-current-member";
 import { useGetWorkspace } from "@/features/workspaces/api/use-get-workspace";
 import { useWorkspaceId } from "@/hooks/use-workspace-id";
-import { Loader, TriangleAlert } from "lucide-react";
+import { Loader } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 
@@ -24,7 +26,7 @@ export default function WorkspaceIdPage() {
     workspaceId,
   });
 
-  const channelId = useMemo(() => channels?.[0]._id, [channels]);
+  const channelId = useMemo(() => channels?.[0]?._id, [channels]);
   const isAdmin = useMemo(() => member?.role === "admin", [member?.role]);
 
   useEffect(() => {
@@ -57,7 +59,7 @@ export default function WorkspaceIdPage() {
     workspaceLoading,
   ]);
 
-  if (workspace || channelsLoading) {
+  if (channelsLoading || memberLoading || workspaceLoading) {
     return (
       <div className="h-full flex-1 flex items-center justify-center flex-col gap-2">
         <Loader className="size-6 animate-spin text-muted-foreground" />
@@ -65,21 +67,11 @@ export default function WorkspaceIdPage() {
     );
   }
 
-  if (!workspace) {
-    return (
-      <div className="h-full flex-1 flex items-center justify-center flex-col gap-2">
-        <TriangleAlert className="size-6 text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">
-          Workspace not found
-        </span>
-      </div>
-    );
+  if (!workspace || !member) {
+    return <Loading />;
   }
 
-  return (
-    <div className="h-full flex-1 flex items-center justify-center flex-col gap-2">
-      <TriangleAlert className="size-6 text-muted-foreground" />
-      <span className="text-sm text-muted-foreground">No channel found</span>
-    </div>
-  );
+  // if (!channels?.length) {
+  return <NotFound label="No channel found" />;
+  // }
 }
