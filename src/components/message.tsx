@@ -11,6 +11,8 @@ import { useUpdateMessage } from "@/features/messages/api/use-update-message";
 import { cn } from "@/lib/utils";
 import { useDeleteMessage } from "@/features/messages/api/use-delete-message";
 import useConfirm from "@/hooks/use-confirm";
+import { useToggleReaction } from "@/features/reactions/api/use-reaction-toggle";
+import Reactions from "./reactions";
 
 const Renderer = dynamic(() => import("./renderer"), { ssr: false });
 const Editor = dynamic(() => import("./editor"), { ssr: false });
@@ -74,6 +76,9 @@ export default function Message({
   const { mutate: deleteMessage, isPending: isDeletingMessage } =
     useDeleteMessage();
 
+  const { mutate: toggleReaction, isPending: isTogglingReaction } =
+    useToggleReaction();
+
   const isPending = isUpdatingMessage;
 
   const handleUpdate = ({ body }: { body: string }) => {
@@ -103,6 +108,17 @@ export default function Message({
         },
         onError: () => {
           toast.error("Failed to delete message");
+        },
+      }
+    );
+  };
+
+  const handleReaction = (value: string) => {
+    toggleReaction(
+      { messageId: id, value },
+      {
+        onError: () => {
+          toast.error("Failed to toggle reaction");
         },
       }
     );
@@ -149,6 +165,8 @@ export default function Message({
                     (edited)
                   </span>
                 ) : null}
+
+                <Reactions data={reactions} onChange={handleReaction} />
               </div>
             )}
           </div>
@@ -160,7 +178,7 @@ export default function Message({
               handleEdit={() => setEditingId(id)}
               handleThread={() => {}}
               handleDelete={handleDelete}
-              handleReaction={() => {}}
+              handleReaction={handleReaction}
               hideThreadButton={hideThreadButton}
             />
           )}
@@ -226,6 +244,8 @@ export default function Message({
               {updateAt ? (
                 <span className="text-xs text-muted-foreground">(edited)</span>
               ) : null}
+
+              <Reactions data={reactions} onChange={handleReaction} />
             </div>
           )}
         </div>
@@ -237,7 +257,7 @@ export default function Message({
             handleEdit={() => setEditingId(id)}
             handleThread={() => {}}
             handleDelete={handleDelete}
-            handleReaction={() => {}}
+            handleReaction={handleReaction}
             hideThreadButton={hideThreadButton}
           />
         )}
