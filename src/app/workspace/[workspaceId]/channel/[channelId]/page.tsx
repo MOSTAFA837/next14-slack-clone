@@ -18,8 +18,6 @@ function ChannelIdPage() {
 
   const { results, status, loadMore } = useGetMessages({ channelId });
 
-  console.log(results);
-
   if (channelLoading || status === "LoadingFirstPage") {
     return <Loading />;
   }
