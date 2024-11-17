@@ -96,7 +96,7 @@ export default function SignInCard({ setState }: SignInCardProps) {
         <div className="flex flex-col gap-y-2.5">
           <Button
             disabled={pending}
-            onClick={() => {}}
+            onClick={() => handleProviderSignIn("google")}
             variant="outline"
             size="lg"
             className="w-full relative"
